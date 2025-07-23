@@ -2,56 +2,104 @@ package com.example.paginationDemo.service;
 
 import com.example.paginationDemo.model.User;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+
 
 @Service
 public class PaginationService {
+    @Autowired
+    private EntityManager em;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    public Map<String, Object> offset(Integer page) {
+        int size = 10;
+        int offset = (page != null ? page : 1) - 1;
 
-    private static final int PAGE_SIZE = 10;
+        List<?> users = em.createNativeQuery("SELECT id, username, created_at FROM users ORDER BY id LIMIT :size OFFSET :offset")
+                .setParameter("size", size)
+                .setParameter("offset", offset * size)
+                .getResultList();
 
-    public List<User> fetchPage(String method, int page) {
-        int offset = (page - 1) * PAGE_SIZE;
-        String sql;
+        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
 
-        switch (method) {
-            case "offset":
-                sql = "SELECT * FROM users ORDER BY id OFFSET :offset LIMIT :limit";
-                break;
-            case "keyset":
-                int keysetStartId = offset + 1;
-                sql = "SELECT * FROM users WHERE id >= " + keysetStartId + " ORDER BY id LIMIT :limit";
-                break;
-            case "join":
-                sql = "SELECT u.* FROM users u JOIN (SELECT id FROM users ORDER BY id OFFSET :offset LIMIT :limit) sub ON u.id = sub.id";
-                break;
-            case "rownum":
-                sql = "WITH numbered AS (SELECT *, ROW_NUMBER() OVER (ORDER BY id) AS rn FROM users) SELECT * FROM numbered WHERE rn BETWEEN :start AND :end";
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown method: " + method);
-        }
-
-        Query query = entityManager.createNativeQuery(sql, User.class);
-
-        if (method.equals("rownum")) {
-            query.setParameter("start", offset + 1);
-            query.setParameter("end", offset + PAGE_SIZE);
-        } else if (!method.equals("keyset")) {
-            query.setParameter("offset", offset);
-            query.setParameter("limit", PAGE_SIZE);
-        } else {
-            query.setParameter("limit", PAGE_SIZE);
-        }
-
-        return query.getResultList();
+        return Map.of(
+                "data", users.stream().map(this::mapUser).toList(),
+                "totalPages", (int) Math.ceil(total / (double) size)
+        );
     }
 
+    public Map<String, Object> keyset(Long cursorId) {
+        int size = 10;
+        String sql = "SELECT id, username, created_at FROM users WHERE id > :cursor ORDER BY id LIMIT :size";
+        Query q = em.createNativeQuery(sql);
+        q.setParameter("cursor", cursorId != null ? cursorId : 0L);
+        q.setParameter("size", size);
+        List<?> users = q.getResultList();
 
+        return Map.of("data", users.stream().map(this::mapUser).toList());
+    }
+
+    public Map<String, Object> join(Integer page) {
+        int size = 10;
+        int offset = (page != null ? page : 1) - 1;
+
+        String sql = """
+            SELECT u.id, u.username, u.created_at, p.phone, a.city
+            FROM users u
+            JOIN phones p ON u.id = p.user_id
+            JOIN addresses a ON u.id = a.user_id
+            ORDER BY u.id LIMIT :size OFFSET :offset
+        """;
+
+        Query q = em.createNativeQuery(sql);
+        q.setParameter("size", size);
+        q.setParameter("offset", offset * size);
+        List<?> rows = q.getResultList();
+
+        return Map.of(
+                "data", rows.stream().map(this::mapUserWithJoin).toList(),
+                "totalPages", 1 // can be calculated with count if needed
+        );
+    }
+
+    public Map<String, Object> rownum(Integer page) {
+        int size = 10;
+        int offset = (page != null ? page : 1) - 1;
+
+        String sql = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY id) as rn FROM users) sub WHERE rn > :start AND rn <= :end";
+        Query q = em.createNativeQuery(sql);
+        q.setParameter("start", offset * size);
+        q.setParameter("end", offset * size + size);
+
+        List<?> rows = q.getResultList();
+
+        return Map.of(
+                "data", rows.stream().map(this::mapUser).toList(),
+                "totalPages", 1 // Add count if needed
+        );
+    }
+
+    private Map<String, Object> mapUser(Object row) {
+        Object[] arr = (Object[]) row;
+        return Map.of(
+                "id", arr[0],
+                "username", arr[1],
+                "createdAt", arr[2]
+        );
+    }
+
+    private Map<String, Object> mapUserWithJoin(Object row) {
+        Object[] arr = (Object[]) row;
+        return Map.of(
+                "id", arr[0],
+                "username", arr[1],
+                "createdAt", arr[2],
+                "phone", arr[3],
+                "city", arr[4]
+        );
+    }
 }
