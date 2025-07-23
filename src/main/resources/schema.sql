@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Insert sample data
 INSERT INTO users (username)
-SELECT 'user' || generate_series(1, 1000);
+SELECT 'user' || generate_series(1, 10000000);
 
