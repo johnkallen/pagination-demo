@@ -36,26 +36,28 @@ public class PaginationController {
     public ResponseEntity<Map<String, Object>> paginate(
             @RequestParam String method,
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Long cursorId
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam(required = false) Integer pageSize
     ) {
         long start = System.currentTimeMillis();
+        if (pageSize == null) pageSize = 10; // Default top pageSize
         Map<String, Object> result;
 
         switch (method.toLowerCase()) {
             case "keyset":
-                result = paginationService.keyset(cursorId);
+                result = paginationService.keyset(cursorId, pageSize);
                 break;
             case "join":
-                result = paginationService.join(page);
+                result = paginationService.join(page, pageSize);
                 break;
             case "rownum":
-                result = paginationService.rownum(page);
+                result = paginationService.rownum(page, pageSize);
                 break;
             case "materialized":
-                result = paginationService.mv(page);
+                result = paginationService.mv(page, pageSize);
                 break;
             default:
-                result = paginationService.offset(page);
+                result = paginationService.offset(page, pageSize);
         }
         result = new HashMap<>(result);
         result.put("durationMs", System.currentTimeMillis() - start);

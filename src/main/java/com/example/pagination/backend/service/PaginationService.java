@@ -20,8 +20,8 @@ public class PaginationService {
     @Autowired
     private UserDetailsRepository userDetailsRepository;
 
-    public Map<String, Object> offset(Integer page) {
-        int size = 10;
+    public Map<String, Object> offset(Integer page, Integer size) {
+
         int offset = (page != null ? page : 1) - 1;
 
         List<?> users = em.createNativeQuery("SELECT id, username, created_at FROM users ORDER BY id LIMIT :size OFFSET :offset")
@@ -37,8 +37,8 @@ public class PaginationService {
         );
     }
 
-    public Map<String, Object> keyset(Long cursorId) {
-        int size = 10;
+    public Map<String, Object> keyset(Long cursorId, Integer size) {
+
         String sql = "SELECT id, username, created_at FROM users WHERE id > :cursor ORDER BY id LIMIT :size";
         Query q = em.createNativeQuery(sql);
         q.setParameter("cursor", cursorId != null ? cursorId : 0L);
@@ -48,8 +48,8 @@ public class PaginationService {
         return Map.of("data", users.stream().map(this::mapUser).toList());
     }
 
-    public Map<String, Object> join(Integer page) {
-        int size = 10;
+    public Map<String, Object> join(Integer page, Integer size) {
+
         int offset = (page != null ? page : 1) - 1;
 
         String sql = """
@@ -73,8 +73,8 @@ public class PaginationService {
         );
     }
 
-    public Map<String, Object> rownum(Integer page) {
-        int size = 10;
+    public Map<String, Object> rownum(Integer page, Integer size) {
+
         int offset = (page != null ? page : 1) - 1;
 
         String sql = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY id) as rn FROM users) sub WHERE rn > :start AND rn <= :end";
@@ -92,9 +92,11 @@ public class PaginationService {
         );
     }
 
-    public Map<String, Object> mv(Integer page) {
-        int size = 10;
-        int offset = page * size;
+    public Map<String, Object> mv(Integer page, Integer size) {
+
+//        int offset = page * size;
+        int offset = ((page != null ? page : 1) - 1) * size;
+
         List<Object[]> data = userDetailsRepository.findFromMaterializedView(size, offset);
 
         int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
