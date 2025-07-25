@@ -43,3 +43,41 @@ SELECT
   LPAD((10000 + u.id)::text, 5, '0')
 FROM users u;
 
+-- Run App first to demo how indexing affects speed, before running below index commands.
+
+-- *** INDEXES ***
+--    For JOIN performance
+CREATE INDEX idx_phones_user_id ON phones(user_id);
+CREATE INDEX idx_addresses_user_id ON addresses(user_id);
+
+-- For sort-based pagination (if applicable)
+CREATE INDEX idx_users_id ON users(id);
+-- if your query uses filtering like WHERE city = 'NY', you should also index addresses.city.
+
+-- If your query uses WHERE user_id = ? AND phone_number = ? then create a composite index
+CREATE INDEX idx_phones_user_id_phone_number ON phones(user_id, phone_number);
+
+
+-- Materialized View
+CREATE MATERIALIZED VIEW user_details_mv AS
+SELECT
+    u.id AS user_id,
+    u.username,
+    u.created_at,
+    p.phone_number,
+    a.street,
+    a.city,
+    a.state,
+    a.zip_code
+FROM users u
+LEFT JOIN phones p ON u.id = p.user_id
+LEFT JOIN addresses a ON u.id = a.user_id;
+
+CREATE INDEX idx_user_details_mv_user_id ON user_details_mv(user_id);
+
+-- Materialized views don’t auto-update (a cron job has to refresh it or you can manually refresh with below).
+REFRESH MATERIALIZED VIEW user_details_mv;
+
+@Query(value = "SELECT * FROM user_details_mv ORDER BY user_id LIMIT :limit OFFSET :offset", nativeQuery = true)
+List<UserDetailsDto> findFromMaterializedView(@Param("limit") int limit, @Param("offset") int offset);
+

@@ -1,4 +1,4 @@
-package com.example.paginationDemo.model;
+package com.example.pagination.backend.entities;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;

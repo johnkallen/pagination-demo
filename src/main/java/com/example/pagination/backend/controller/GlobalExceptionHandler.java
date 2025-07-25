@@ -1,4 +1,4 @@
-package com.example.paginationDemo.controller;
+package com.example.pagination.backend.controller;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

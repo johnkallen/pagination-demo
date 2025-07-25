@@ -1,6 +1,6 @@
-package com.example.paginationDemo.repository;
+package com.example.pagination.backend.repository;
 
-import com.example.paginationDemo.model.User;
+import com.example.pagination.backend.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

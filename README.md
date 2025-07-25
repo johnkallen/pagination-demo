@@ -8,7 +8,7 @@ Start Postgres Database before running (in a terminal):
  - GRANT ALL PRIVILEGES ON DATABASE paginationdb TO myuser;
  - ALTER DEFAULT PRIVILEGES FOR ROLE john_kallen IN SCHEMA public GRANT SELECT, UPDATE, INSERT, DELETE ON TABLES TO myuser;
 
-Connect to database
+Connect to Postgres database
  - psql -U myuser -d paginationdb
  -  postgres=# \dt *.* -- List all schemas and tables
  -  postgres=# \dt public.* -- List public schema and all tables
@@ -17,8 +17,9 @@ Connect to database
  - SET SEARCH_PATH = public;
  - \dn -- List of Schemas
  - \l -- list databases
- - \c paginationdb -- change to database
+ - \c postgres -- change to database
  - \dt -- show database tables
+ - \ds -- show sequence names
 
 
 Use SQL in resources/schema.sql to create data

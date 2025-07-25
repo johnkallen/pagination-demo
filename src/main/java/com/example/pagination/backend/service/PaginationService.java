@@ -1,7 +1,9 @@
-package com.example.paginationDemo.service;
+package com.example.pagination.backend.service;
 
-import com.example.paginationDemo.model.User;
+import com.example.pagination.backend.entities.UserDetailsView;
+import com.example.pagination.backend.repository.UserDetailsRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,8 +14,11 @@ import java.util.Map;
 
 @Service
 public class PaginationService {
-    @Autowired
+    @PersistenceContext
     private EntityManager em;
+
+    @Autowired
+    private UserDetailsRepository userDetailsRepository;
 
     public Map<String, Object> offset(Integer page) {
         int size = 10;
@@ -48,7 +53,7 @@ public class PaginationService {
         int offset = (page != null ? page : 1) - 1;
 
         String sql = """
-            SELECT u.id, u.username, u.created_at, p.phone, a.city
+            SELECT u.id, u.username, u.created_at, p.phone_number, a.city
             FROM users u
             JOIN phones p ON u.id = p.user_id
             JOIN addresses a ON u.id = a.user_id
@@ -60,9 +65,11 @@ public class PaginationService {
         q.setParameter("offset", offset * size);
         List<?> rows = q.getResultList();
 
+        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+
         return Map.of(
                 "data", rows.stream().map(this::mapUserWithJoin).toList(),
-                "totalPages", 1 // can be calculated with count if needed
+                "totalPages", (int) Math.ceil(total / (double) size)
         );
     }
 
@@ -77,9 +84,24 @@ public class PaginationService {
 
         List<?> rows = q.getResultList();
 
+        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+
         return Map.of(
                 "data", rows.stream().map(this::mapUser).toList(),
-                "totalPages", 1 // Add count if needed
+                "totalPages", (int) Math.ceil(total / (double) size)
+        );
+    }
+
+    public Map<String, Object> mv(Integer page) {
+        int size = 10;
+        int offset = page * size;
+        List<Object[]> data = userDetailsRepository.findFromMaterializedView(size, offset);
+
+        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+
+        return Map.of(
+                "data", data,
+                "totalPages", (int) Math.ceil(total / (double) size)
         );
     }
 
