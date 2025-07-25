@@ -1,6 +1,5 @@
 package com.example.pagination.backend.service;
 
-import com.example.pagination.backend.entities.UserDetailsView;
 import com.example.pagination.backend.repository.UserDetailsRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -47,6 +46,23 @@ public class PaginationService {
 
         return Map.of("data", users.stream().map(this::mapUser).toList());
     }
+
+    public Map<String, Object> keysetpages(Long cursorId, Integer size) {
+
+        String sql = "SELECT id, username, created_at FROM users WHERE id > :cursor ORDER BY id LIMIT :size";
+        Query q = em.createNativeQuery(sql);
+        q.setParameter("cursor", cursorId != null ? cursorId : 0L);
+        q.setParameter("size", size);
+        List<?> users = q.getResultList();
+
+        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+
+        return Map.of(
+                "data", users.stream().map(this::mapUser).toList(),
+                "totalPages", (int) Math.ceil(total / (double) size)
+        );
+    }
+
 
     public Map<String, Object> join(Integer page, Integer size) {
 

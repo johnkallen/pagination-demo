@@ -47,6 +47,9 @@ public class PaginationController {
             case "keyset":
                 result = paginationService.keyset(cursorId, pageSize);
                 break;
+            case "keysetpages":
+                result = paginationService.keysetpages(cursorId, pageSize);
+                break;
             case "join":
                 result = paginationService.join(page, pageSize);
                 break;
