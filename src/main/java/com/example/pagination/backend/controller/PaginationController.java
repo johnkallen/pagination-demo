@@ -51,7 +51,7 @@ public class PaginationController {
             case "rownum":
                 result = paginationService.rownum(page);
                 break;
-            case "mv":
+            case "materialized":
                 result = paginationService.mv(page);
                 break;
             default:

@@ -100,7 +100,7 @@ public class PaginationService {
         int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
 
         return Map.of(
-                "data", data,
+                "data", data.stream().map(this::mapUserWithMaterializedView).toList(),
                 "totalPages", (int) Math.ceil(total / (double) size)
         );
     }
@@ -122,6 +122,20 @@ public class PaginationService {
                 "createdAt", arr[2],
                 "phone", arr[3],
                 "city", arr[4]
+        );
+    }
+
+    private Map<String, Object> mapUserWithMaterializedView(Object row) {
+        Object[] arr = (Object[]) row;
+        return Map.of(
+                "id", arr[0],
+                "username", arr[1],
+                "createdAt", arr[2],
+                "phone", arr[3],
+                "street", arr[4],
+                "city", arr[5],
+                "state", arr[6],
+                "zipCode", arr[7]
         );
     }
 }
