@@ -55,7 +55,9 @@ public class PaginationService {
         q.setParameter("size", size);
         List<?> users = q.getResultList();
 
-        int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+        int total = 0;
+        if (cursorId == null || cursorId == 0) total = ((Number) em.createNativeQuery
+                ("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
 
         return Map.of(
                 "data", users.stream().map(this::mapUser).toList(),
