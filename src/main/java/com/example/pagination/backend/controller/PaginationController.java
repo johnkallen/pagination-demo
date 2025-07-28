@@ -41,30 +41,16 @@ public class PaginationController {
     ) {
         long start = System.currentTimeMillis();
         if (pageSize == null) pageSize = 10; // Default top pageSize
-        Map<String, Object> result;
+        Map<String, Object> result = switch (method.toLowerCase()) {
+            case "keyset" -> paginationService.keyset(cursorId, pageSize);
+            case "keysetpages" -> paginationService.keysetpages(cursorId, pageSize);
+            case "join" -> paginationService.join(page, pageSize);
+            case "rownum" -> paginationService.rownum(page, pageSize);
+            case "materialized" -> paginationService.mv(page, pageSize);
+            case "keysetmv" -> paginationService.keysetmv(cursorId, pageSize);
+            default -> paginationService.offset(page, pageSize);
+        };
 
-        switch (method.toLowerCase()) {
-            case "keyset":
-                result = paginationService.keyset(cursorId, pageSize);
-                break;
-            case "keysetpages":
-                result = paginationService.keysetpages(cursorId, pageSize);
-                break;
-            case "join":
-                result = paginationService.join(page, pageSize);
-                break;
-            case "rownum":
-                result = paginationService.rownum(page, pageSize);
-                break;
-            case "materialized":
-                result = paginationService.mv(page, pageSize);
-                break;
-            case "keysetmv":
-                result = paginationService.keysetmv(cursorId, pageSize);
-                break;
-            default:
-                result = paginationService.offset(page, pageSize);
-        }
         result = new HashMap<>(result);
         result.put("durationMs", System.currentTimeMillis() - start);
         return ResponseEntity.ok(result);

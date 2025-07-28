@@ -1,5 +1,8 @@
 Demo for my 5+ - SQL pagination methods with pros and cons for each
 
+This demo is expected to be used with its react counterpart:
+
+
 Start Postgres Database before running (in a terminal):
  - brew services start postgresql
  - psql postgres
@@ -9,7 +12,7 @@ Start Postgres Database before running (in a terminal):
  - ALTER DEFAULT PRIVILEGES FOR ROLE john_kallen IN SCHEMA public GRANT SELECT, UPDATE, INSERT, DELETE ON TABLES TO myuser;
 
 Connect to Postgres database
- - psql -U myuser -d paginationdb
+ - (LOGIN command) psql -U myuser -d postgres
  -  postgres=# \dt *.* -- List all schemas and tables
  -  postgres=# \dt public.* -- List public schema and all tables
  - SELECT * FROM pg_settings WHERE name = 'port'; -- Get Port
@@ -19,7 +22,9 @@ Connect to Postgres database
  - \l -- list databases
  - \c postgres -- change to database
  - \dt -- show database tables
+ - \d <table> -- show column info
  - \ds -- show sequence names
+ - SELECT * FROM users ORDER BY id LIMIT 30;
 
 
 Use SQL in resources/schema.sql to create data
