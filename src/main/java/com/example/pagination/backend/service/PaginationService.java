@@ -112,12 +112,25 @@ public class PaginationService {
 
     public Map<String, Object> mv(Integer page, Integer size) {
 
-//        int offset = page * size;
         int offset = ((page != null ? page : 1) - 1) * size;
 
         List<Object[]> data = userDetailsRepository.findFromMaterializedView(size, offset);
 
         int total = ((Number) em.createNativeQuery("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
+
+        return Map.of(
+                "data", data.stream().map(this::mapUserWithMaterializedView).toList(),
+                "totalPages", (int) Math.ceil(total / (double) size)
+        );
+    }
+
+    public Map<String, Object> keysetmv(Long cursorId, Integer size) {
+
+        List<Object[]> data = userDetailsRepository.findFromMaterializedViewKeyset(size, cursorId != null ? cursorId : 0L);
+
+        int total = 0;
+        if (cursorId == null || cursorId == 0) total = ((Number) em.createNativeQuery
+                ("SELECT COUNT(*) FROM users").getSingleResult()).intValue();
 
         return Map.of(
                 "data", data.stream().map(this::mapUserWithMaterializedView).toList(),

@@ -59,6 +59,9 @@ public class PaginationController {
             case "materialized":
                 result = paginationService.mv(page, pageSize);
                 break;
+            case "keysetmv":
+                result = paginationService.keysetmv(cursorId, pageSize);
+                break;
             default:
                 result = paginationService.offset(page, pageSize);
         }
